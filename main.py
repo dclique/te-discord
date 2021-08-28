@@ -1,6 +1,7 @@
 import discord
 import csv
 import csvhelper
+import os
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from discord.ext import commands
@@ -9,7 +10,7 @@ from datetime import datetime
 # client = discord.Client()
 bot = commands.Bot(command_prefix = '!')
 channel_id=880988016582217751
-
+token = os.environ["ACCESS_TOKEN"]
 
 @bot.event
 async def on_ready():
@@ -77,6 +78,4 @@ async def whohasntpaid(ctx):
     except StopIteration:
         await ctx.send('It is a new month, no one has paid yet')
 
-
-
-bot.run("ODgwOTg3ODM0MjQzMjQ0MDUz.YSmR2w.6NEX5uy47he0GQzygXIlchrQ9XM")
+bot.run(token)
