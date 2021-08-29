@@ -132,23 +132,33 @@ async def debug(ctx):
 async def addmember(ctx, *args):
     if len(args) > 0 and len(args) < 3:
         f = csvhelper.read_file(dues_file)
-
-        try:
-            csvhelper.add_column(f, args[0])
-            if len(args) == 2:
-                memberid = ctx.guild.get_member_named(args[1]).id                
-                add_member(args[0], args[1], memberid)            
-            csvhelper.write_file(f, dues_file)            
-            await ctx.send('Added new member: ' + args[0])
-        except ValueError:
+        if args[0] in f[0]:
+            members = await memberObj.get_members()
+            if args[0] not in members:
+                if len(args) == 2:
+                    memberid = ctx.guild.get_member_named(args[1]).id                
+                    add_member(args[0], args[1], memberid)
+                    await ctx.send(f'Associated {args[0]} to <@{str(memberid)}>')
+                    return
             await ctx.send('Member ' + args[0] + ' already exists')
+            return
+        else:
+            try:
+                csvhelper.add_column(f, args[0])
+                if len(args) == 2:
+                    memberid = ctx.guild.get_member_named(args[1]).id                
+                    add_member(args[0], args[1], memberid)
+                csvhelper.write_file(f, dues_file)
+                await ctx.send('Added new member: ' + args[0])
+            except ValueError:
+                await ctx.send('Member ' + args[0] + ' already exists')
 
 
 @bot.command()
 @commands.has_role(role)
 async def deletemember(ctx, *args):
     members = await memberObj.get_members()
-    if len(members == 1):
+    if len(members) == 1:
         await ctx.send('There\'s only one discord tag associated member left, cannot delete them because the world will end!')
     if len(args) == 1:
         f = csvhelper.read_file(dues_file)
