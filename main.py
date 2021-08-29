@@ -10,7 +10,10 @@ from datetime import datetime
 # client = discord.Client()
 bot = commands.Bot(command_prefix = '!')
 channel_id=880988016582217751
-token = os.environ["ACCESS_TOKEN"]
+admin_id=151195732211138561
+role='treasurer'
+csvhelper.filename = 'dues.csv'
+#token = os.environ["ACCESS_TOKEN"]
 
 @bot.event
 async def on_ready():
@@ -19,54 +22,142 @@ async def on_ready():
     #initializing scheduler
     scheduler = AsyncIOScheduler()
 
-    #sends "Your Message" at 12PM and 18PM (Local Time)
-    scheduler.add_job(func, CronTrigger(second="27")) 
-
+    #scheduler.add_job(monthly_reminder, CronTrigger(day=3)) 
+    scheduler.add_job(weekly_reminder, CronTrigger(day_of_week=6, hour=17))
+    scheduler.add_job(debug_to_console, CronTrigger(hour=0))
     #starting the scheduler
     scheduler.start()
 
-async def func():
+
+async def monthly_reminder():
     await bot.wait_until_ready()
     c = bot.get_channel(channel_id)
-    await c.send("Your Message")
+    await c.send("Reminder to pay for this month")
 
+async def weekly_reminder():
+    await bot.wait_until_ready()
+    c = bot.get_channel(channel_id)
+    people = csvhelper.hasntpaid(f, time)
+    if (len(people) > 0):
+        await c.send('Weekly reminder - the following people haven\'t paid: ' + ', '.join(people))
+
+async def debug_to_console():
+    f = csvhelper.read_raw()
+    raw = csvhelper.dump_string(f)
+    print(raw)
+
+
+@bot.event
+async def on_command_error(ctx, e):
+    if isinstance(e, commands.MissingRole):
+        return
+    else:
+        raise e
+
+
+@bot.command()
+async def debug(ctx):
+    await debug_to_console()
 
 
 @bot.command()
 async def test(ctx):
     print('We haveasdsa logged in as {0.user}'.format(bot))
+    print(ctx.message.author.id)
     await ctx.send('testtt')
 
 @bot.command()
+@commands.has_role(role)
 async def addmember(ctx, *args):
-    f = csvhelper.read_file()
-    for arg in args:        
-        csvhelper.add_column(f, arg)
-    csvhelper.write_file(f)
+    added = []
+    notadded = []
+    if len(args) > 0:
+        f = csvhelper.read_file()
+        for arg in args:
+            try:
+                csvhelper.add_column(f, arg)
+                added.append(arg)
+            except ValueError:
+                notadded.append(arg)
+
+        csvhelper.write_file(f)
+
+        if len(added) == 1:
+            await ctx.send('Added a new member: ' + ''.join(added))
+        if len(added) > 1:
+            await ctx.send('Added new members: ' + ', '.join(added))
+        if len(notadded) == 1:
+            await ctx.send(''.join(notadded) + ' already exists')
+        if len(notadded) > 1:
+            await ctx.send(', '.join(notadded) + ' already exist')
 
 @bot.command()
+@commands.has_role(role)
+async def deletemember(ctx, *args):
+    deleted = []
+    notdeleted = []
+    if len(args) > 0:
+        f = csvhelper.read_file()
+        for arg in args:
+            try:
+                csvhelper.delete_column(f, arg)
+                deleted.append(arg)
+            except ValueError:
+                notdeleted.append(arg)
+        csvhelper.write_file(f)
+        if len(deleted) == 1:
+            await ctx.send('Deleted member: ' + ''.join(deleted))
+        if len(deleted) > 1:
+            await ctx.send('Deleted members: ' + ', '.join(deleted))
+        if len(notdeleted) == 1:
+            await ctx.send(''.join(notdeleted) + ' does not exist')
+        if len(notdeleted) > 1:
+            await ctx.send(', '.join(notdeleted) + ' do not exist')
+
+
+@bot.command()
+@commands.has_role(role)
 async def paid(ctx, *args):
-    time = datetime.now().strftime('%B') + str(datetime.today().year)
-    f = csvhelper.read_file()
-    for arg in args:
-        try:
-            csvhelper.mark_paid(f, arg, time, 'Y')
-        except ValueError:
-            print('not a vliad person')
-            await ctx.send('not a valid person')
-    csvhelper.write_file(f)
+    paid = []
+    invalid = []
+    if len(args) > 0:
+        time = datetime.now().strftime('%B') + str(datetime.today().year)
+        f = csvhelper.read_file()
+        for arg in args:
+            try:
+                csvhelper.mark_paid(f, arg, time, 'Y')
+                paid.append(arg)
+            except ValueError:
+                invalid.append(arg)
+        csvhelper.write_file(f)
+        if len(paid) > 0:
+            await ctx.send(', '.join(paid) + ' marked as paid for ' + datetime.now().strftime('%B') + ' ' + str(datetime.today().year))
+        if len(invalid) == 1:
+            await ctx.send(''.join(invalid) + ' is not a valid member')
+        if len(invalid) > 1:
+            await ctx.send(', '.join(invalid) + ' are not valid members')
 
 @bot.command()
+@commands.has_role(role)
 async def notpaid(ctx, *args):
-    time = datetime.now().strftime('%B') + str(datetime.today().year)
-    f = csvhelper.read_file()
-    for arg in args:
-        try:
-            csvhelper.mark_paid(f, arg, time, 'N')
-        except ValueError:
-            print('not a vliad person')
-            await ctx.send('not a valid person')
-    csvhelper.write_file(f)
+    paid = []
+    invalid = []
+    if len(args) > 0:
+        time = datetime.now().strftime('%B') + str(datetime.today().year)
+        f = csvhelper.read_file()
+        for arg in args:
+            try:
+                csvhelper.mark_paid(f, arg, time, 'N')
+                paid.append(arg)
+            except ValueError:
+                invalid.append(arg)
+        csvhelper.write_file(f)
+        if len(paid) > 0:
+            await ctx.send(', '.join(paid) + ' marked as not paid for ' + datetime.now().strftime('%B') + ' ' + str(datetime.today().year))
+        if len(invalid) == 1:
+            await ctx.send(''.join(invalid) + ' is not a valid member')
+        if len(invalid) > 1:
+            await ctx.send(', '.join(invalid) + ' are not valid members')
 
 @bot.command()
 async def whohasntpaid(ctx):
@@ -78,4 +169,4 @@ async def whohasntpaid(ctx):
     except StopIteration:
         await ctx.send('It is a new month, no one has paid yet')
 
-bot.run(token)
+bot.run('ODgwOTg3ODM0MjQzMjQ0MDUz.YSmR2w.4EoKm4PWdbbdBmMsV9A0AqkwIG8')
