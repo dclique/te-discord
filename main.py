@@ -109,8 +109,7 @@ async def debug_to_console():
 
 @bot.event
 async def on_message(message):
-    print('Message received ' + str(message.channel.id))
-    if message.channel.id == channel_id:
+    if str(message.channel.id) == channel_id:
         await bot.process_commands(message)
 
 
