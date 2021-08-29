@@ -7,13 +7,12 @@ from apscheduler.triggers.cron import CronTrigger
 from discord.ext import commands
 from datetime import datetime
 
-# client = discord.Client()
 bot = commands.Bot(command_prefix = '!')
-channel_id=880988016582217751
-admin_id=151195732211138561
-role='treasurer'
-csvhelper.filename = 'dues.csv'
-#token = os.environ["ACCESS_TOKEN"]
+
+channel_id=os.environ["CHANNEL_ID"]
+role=os.environ["ADMIN_ROLE"]
+csvhelper.filename = os.environ["CSV_FILENAME"]
+token = os.environ["ACCESS_TOKEN"]
 
 @bot.event
 async def on_ready():
@@ -131,7 +130,7 @@ async def paid(ctx, *args):
                 invalid.append(arg)
         csvhelper.write_file(f)
         if len(paid) > 0:
-            await ctx.send(', '.join(paid) + ' marked as paid for ' + datetime.now().strftime('%B') + ' ' + str(datetime.today().year))
+            await ctx.send(f"{', '.join(paid)} marked as paid for {datetime.now().strftime('%B')} {str(datetime.today().year)}")
         if len(invalid) == 1:
             await ctx.send(''.join(invalid) + ' is not a valid member')
         if len(invalid) > 1:
@@ -153,7 +152,7 @@ async def notpaid(ctx, *args):
                 invalid.append(arg)
         csvhelper.write_file(f)
         if len(paid) > 0:
-            await ctx.send(', '.join(paid) + ' marked as not paid for ' + datetime.now().strftime('%B') + ' ' + str(datetime.today().year))
+            await ctx.send(f"{', '.join(paid)} marked as not paid for {datetime.now().strftime('%B')} {str(datetime.today().year)}")
         if len(invalid) == 1:
             await ctx.send(''.join(invalid) + ' is not a valid member')
         if len(invalid) > 1:
@@ -165,8 +164,8 @@ async def whohasntpaid(ctx):
     f = csvhelper.read_file()
     try:
         people = csvhelper.hasntpaid(f, time)
-        await ctx.send('people haven\'t paid: ' + ', '.join(people))
+        await ctx.send(f"These people haven\'t paid for {datetime.now().strftime('%B')} {str(datetime.today().year)}: {', '.join(people)}")
     except StopIteration:
         await ctx.send('It is a new month, no one has paid yet')
 
-bot.run('ODgwOTg3ODM0MjQzMjQ0MDUz.YSmR2w.4EoKm4PWdbbdBmMsV9A0AqkwIG8')
+bot.run(token)
