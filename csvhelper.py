@@ -1,24 +1,24 @@
 import csv
 from datetime import datetime
 
-filename = ''
 
-def read_file():
+def read_file(filename):
     with open(filename, mode='r') as csv_file:
         reader = csv.DictReader(csv_file)
         response = [reader.fieldnames]
         for row in reader:
             response.append(row)
-
         return response
 
-def read_raw():
+
+def read_raw(filename):
     with open(filename, mode='r') as csv_file:
         response = []
         reader = csv.reader(csv_file, delimiter=',')
         for row in reader:
             response.append(row)
         return response
+
 
 def dump_string(curr_file):
     headers = curr_file[0]
@@ -28,13 +28,14 @@ def dump_string(curr_file):
     return response
 
 
-def write_file(dict_to_write):
+def write_file(dict_to_write, filename):
     with open (filename, mode='w', newline='') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames = dict_to_write[0])
         writer.writeheader()
         dict_to_write.pop(0)
         for row in dict_to_write:
             writer.writerow(row)
+
 
 def add_column(curr_dict, column_name):
     if column_name in curr_dict[0]:
@@ -44,6 +45,7 @@ def add_column(curr_dict, column_name):
         curr_dict[x].update({column_name:'N/A'})
     return curr_dict
 
+
 def delete_column(curr_dict, column_name):
     if column_name not in curr_dict[0]:
         raise ValueError
@@ -51,7 +53,6 @@ def delete_column(curr_dict, column_name):
         curr_dict[x].pop(column_name)
     curr_dict[0].remove(column_name)
     return curr_dict
-
 
 
 def mark_paid(curr_dict, payer, time, paid):
@@ -75,10 +76,10 @@ def mark_paid(curr_dict, payer, time, paid):
                 newmonth.update({person: 'N'})
         curr_dict.append(newmonth)
 
+
 def hasntpaid(curr_dict, time):
     withoutheader = curr_dict[1:len(curr_dict):1]
     month = next(x for x in withoutheader if x[''] == time)
-    print(month)
     people = []
     for person in month:
         if person == '':
@@ -88,14 +89,8 @@ def hasntpaid(curr_dict, time):
     return people
 
 
-
 def main():
-    thefile = read_file()
-    #add_column(thefile,'Blaine')
-    #filewithoutheader = thefile[1:len(thefile):1]
-    mark_paid(thefile, 'Alex', datetime.now().strftime('%B') + str(datetime.today().year), True)
-    print(thefile)
-    #write_file(thefile)
+    print('Wrong place')
 
 if __name__ == "__main__":
     main()
